@@ -3,105 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Worshiplife Ministry Quiz</title>
+    <title>WLM Quiz | Excellence Edition</title>
     <style>
-        /* YOUR CSS GOES HERE */
+        :root {
+            --glass: rgba(255, 255, 255, 0.1);
+            --accent: #00d2ff;
+            --text: #ffffff;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
             margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            color: var(--text);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
         }
-        /* Add your specific glassmorphism or aesthetic styles here */
-        .card {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-            width: 90%;
-            max-width: 400px;
-            margin-top: 50px;
+
+        .container {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            padding: 40px 20px;
+            width: 85%;
+            max-width: 420px;
             text-align: center;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
         }
-        button {
-            width: 100%;
-            padding: 15px;
-            margin: 10px 0;
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+            background: linear-gradient(to right, #fff, #00d2ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        #sync-status {
+            font-size: 0.8rem;
+            margin-bottom: 30px;
+            opacity: 0.7;
+            color: #00ffcc;
+        }
+
+        .category-btn {
+            background: rgba(255, 255, 255, 0.9);
+            color: #0f2027;
             border: none;
-            border-radius: 10px;
-            background: #007bff;
+            padding: 18px;
+            margin: 12px 0;
+            width: 100%;
+            border-radius: 15px;
+            font-weight: 700;
+            font-size: 1rem;
+            text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+        }
+
+        .category-btn:active {
+            transform: scale(0.96);
+            background: var(--accent);
             color: white;
-            font-weight: bold;
-            cursor: pointer;
+        }
+
+        #quiz-screen {
+            display: none;
+        }
+
+        .question-box {
+            font-size: 1.2rem;
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
+
+        .option-btn {
+            background: var(--glass);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            padding: 15px;
+            margin: 8px 0;
+            width: 100%;
+            border-radius: 10px;
+            text-align: left;
+            font-size: 0.95rem;
         }
     </style>
 </head>
 <body>
 
-    <div id="home-screen" class="card">
+    <div id="home-screen" class="container">
         <h1>Worshiplife Ministry</h1>
-        <p id="sync-status">Connecting to Cloud...</p>
-        <button onclick="startQuiz('old-testament')">Old Testament</button>
-        <button onclick="startQuiz('new-testament')">New Testament</button>
-        <button onclick="startQuiz('spiritual-growth')">Spiritual Growth</button>
-        <button onclick="startQuiz('teen-life')">Teen Life</button>
+        <div id="sync-status">📡 Initializing Cloud Sync...</div>
+        
+        <button class="category-btn" onclick="startQuiz('old')">Old Testament</button>
+        <button class="category-btn" onclick="startQuiz('new')">New Testament</button>
+        <button class="category-btn" onclick="startQuiz('growth')">Spiritual Growth</button>
+        <button class="category-btn" onclick="startQuiz('teens')">Teen Life</button>
     </div>
 
-    <div id="quiz-screen" class="card" style="display:none;">
-        <h2 id="question-text">Loading Question...</h2>
+    <div id="quiz-screen" class="container">
+        <div class="question-box" id="question-text">Loading...</div>
         <div id="options-container"></div>
+        <button class="category-btn" style="margin-top:20px; background:#ff4b2b; color:white;" onclick="location.reload()">Exit Quiz</button>
     </div>
 
     <script>
-        // YOUR WORKING JAVASCRIPT
-        const SHEET_URL = "https://docs.google.com/spreadsheets/d/1RrgebuElaDoseB0t-wxl288SyN3PCjanxl8vw7Yxxq0/export?format=csv&cachebust=" + Date.now();
+        // Use your actual Sheet ID here
+        const SHEET_ID = "1RrgebuElaDoseB0t-wxl288SyN3PCjanxl8vw7Yxxq0";
+        const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&cachebust=${Date.now()}`;
         
         let database = { "old": [], "new": [], "growth": [], "teens": [] };
 
         async function syncWithCloud() {
             try {
                 const response = await fetch(SHEET_URL);
-                const data = await response.text();
-                parseCSV(data);
-            } catch (e) {
-                document.getElementById('sync-status').innerText = "Offline Mode Active";
+                const csvData = await response.text();
+                processData(csvData);
+            } catch (error) {
+                console.error("Sync failed:", error);
+                document.getElementById('sync-status').innerText = "⚠️ Offline Mode";
             }
         }
 
-        function parseCSV(text) {
-            const rows = text.split('\n').slice(1);
+        function processData(csv) {
+            const rows = csv.split('\n').slice(1); // Skip Header
+            let count = 0;
+
             rows.forEach(row => {
-                const columns = row.split('|'); 
-                if (columns.length >= 4) {
-                    const cat = columns[0].trim().toLowerCase();
-                    const qData = {
-                        question: columns[1].trim(),
-                        options: columns[2].split(';').map(o => o.trim()),
-                        answer: columns[3].trim()
+                // Use comma for standard Google Sheets CSV
+                const cols = row.split(','); 
+                
+                if (cols.length >= 4) {
+                    const category = cols[0].trim().toLowerCase();
+                    const entry = {
+                        question: cols[1].trim(),
+                        options: cols[2].split(';').map(o => o.trim()),
+                        answer: cols[3].trim()
                     };
-                    if (cat.includes('teen')) database.teens.push(qData);
-                    else if (database[cat]) database[cat].push(qData);
+
+                    // Direct mapping
+                    if (database[category]) {
+                        database[category].push(entry);
+                        count++;
+                    }
                 }
             });
-            document.getElementById('sync-status').innerText = "Ministry Cloud Synced";
+
+            document.getElementById('sync-status').innerText = `✅ Ministry Cloud Synced: ${count} Questions`;
         }
 
-        function startQuiz(category) {
-            const map = { 'old-testament': 'old', 'new-testament': 'new', 'spiritual-growth': 'growth', 'teen-life': 'teens' };
-            const data = database[map[category]];
-            if (!data || data.length === 0) {
-                alert("This category is being updated!");
+        function startQuiz(cat) {
+            const questions = database[cat];
+            
+            if (!questions || questions.length === 0) {
+                alert("This category is empty in the Cloud Sheet!");
                 return;
             }
-            // Logic to show questions...
+
             document.getElementById('home-screen').style.display = 'none';
             document.getElementById('quiz-screen').style.display = 'block';
-            document.getElementById('question-text').innerText = data[0].question;
+            
+            showQuestion(questions[0]);
         }
 
+        function showQuestion(q) {
+            document.getElementById('question-text').innerText = q.question;
+            const container = document.getElementById('options-container');
+            container.innerHTML = "";
+
+            q.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "option-btn";
+                btn.innerText = opt;
+                btn.onclick = () => {
+                    if(opt === q.answer) {
+                        btn.style.background = "#28a745";
+                        alert("Correct! Keep growing!");
+                    } else {
+                        btn.style.background = "#dc3545";
+                        alert("Not quite. Check your Bible!");
+                    }
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        // Start the sync when page loads
         syncWithCloud();
     </script>
 </body>
