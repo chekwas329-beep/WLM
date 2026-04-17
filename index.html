@@ -20,7 +20,6 @@
             color: white;
             display: flex; justify-content: center; align-items: center;
             min-height: 100vh;
-            overflow-x: hidden;
         }
 
         .container {
@@ -33,15 +32,8 @@
             width: 85%; max-width: 400px;
             text-align: center;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-            animation: fadeIn 0.8s ease-out;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* FIXED: WLM Youth Section Header */
         .header-tag {
             background: linear-gradient(to right, var(--primary), var(--secondary));
             font-size: 0.75rem; font-weight: 800;
@@ -57,20 +49,9 @@
             border-radius: 10px; margin: 20px 0;
             overflow: hidden; display: none;
         }
-        .progress-bar { 
-            height: 100%; 
-            background: linear-gradient(to right, var(--primary), #fff); 
-            width: 0%; 
-            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
-        }
+        .progress-bar { height: 100%; background: var(--primary); width: 0%; transition: 0.4s ease; }
 
-        .question-box { 
-            font-size: 1.3rem; 
-            font-weight: 600;
-            margin-bottom: 25px; 
-            min-height: 70px;
-            line-height: 1.4;
-        }
+        .question-box { font-size: 1.3rem; font-weight: 600; margin-bottom: 25px; min-height: 70px; }
 
         .btn {
             background: rgba(255, 255, 255, 0.95);
@@ -78,36 +59,25 @@
             padding: 16px; margin: 10px 0;
             width: 100%; border-radius: 18px;
             font-weight: 700; font-size: 1rem;
-            transition: 0.3s all; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            cursor: pointer;
+            transition: 0.3s all; cursor: pointer;
         }
 
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.2); }
-        .btn:active { transform: scale(0.96); }
-        
         .correct { background: var(--success) !important; color: white !important; }
         .wrong { background: var(--error) !important; color: white !important; }
+        /* Special class to show the right answer after a mistake */
+        .reveal { border: 3px solid var(--success) !important; background: rgba(46, 204, 113, 0.2) !important; color: white !important; }
 
-        #sync-status { font-size: 0.75rem; color: #00ffcc; margin-bottom: 20px; font-weight: 600; }
-        
-        .category-grid h2 { font-size: 1.5rem; margin-bottom: 20px; letter-spacing: -0.5px; }
+        #sync-status { font-size: 0.75rem; color: #00ffcc; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div id="quiz-header" class="header-tag">WLM Youth Section</div>
-        <div id="sync-status">📡 Syncing Cloud Data...</div>
-
+        <div class="header-tag">WLM Youth Section</div>
+        <div id="sync-status">📡 Syncing...</div>
         <div class="progress-container" id="p-container"><div class="progress-bar" id="p-bar"></div></div>
-
-        <div id="main-display">
-            </div>
-
-        <div style="margin-top:25px; opacity:0.4; font-size:0.65rem; letter-spacing: 1px;">
-            WLM • DESIGNED BY CHEKWAS • V2.6
-        </div>
+        <div id="main-display"></div>
+        <div style="margin-top:25px; opacity:0.4; font-size:0.65rem;">WLM • DESIGNED BY CHEKWAS • V2.7</div>
     </div>
 
     <script>
@@ -117,6 +87,7 @@
         let database = { "old": [], "new": [], "growth": [], "teens": [] };
         let currentQuestions = [];
         let currentIndex = 0;
+        let score = 0; // SCORE TRACKER
 
         async function init() {
             try {
@@ -124,10 +95,7 @@
                 const csv = await res.text();
                 parseData(csv);
                 showHome();
-            } catch (e) {
-                document.getElementById('sync-status').innerText = "⚠️ Offline Mode";
-                console.error(e);
-            }
+            } catch (e) { document.getElementById('sync-status').innerText = "⚠️ Offline"; }
         }
 
         function parseData(csv) {
@@ -147,40 +115,35 @@
                     }
                 }
             });
-            document.getElementById('sync-status').innerText = `✅ ${total} Cloud Questions Synced`;
+            document.getElementById('sync-status').innerText = `✅ ${total} Questions Ready`;
         }
 
         function showHome() {
+            score = 0; // Reset score when going home
             document.getElementById('p-container').style.display = 'none';
-            const display = document.getElementById('main-display');
-            display.innerHTML = `
-                <div class="category-grid">
-                    <h2 style="margin-top:0;">Select Challenge</h2>
-                    <button class="btn" onclick="start('old')">📜 Old Testament</button>
-                    <button class="btn" onclick="start('new')">📖 New Testament</button>
-                    <button class="btn" onclick="start('growth')">🌱 Spiritual Growth</button>
-                    <button class="btn" onclick="start('teens')">🙌 Teen Life</button>
-                </div>
+            document.getElementById('main-display').innerHTML = `
+                <h2>Select Challenge</h2>
+                <button class="btn" onclick="start('old')">📜 Old Testament</button>
+                <button class="btn" onclick="start('new')">📖 New Testament</button>
+                <button class="btn" onclick="start('growth')">🌱 Spiritual Growth</button>
+                <button class="btn" onclick="start('teens')">🙌 Teen Life</button>
             `;
         }
 
         function start(cat) {
             currentQuestions = database[cat];
             currentIndex = 0;
-            if (!currentQuestions || currentQuestions.length === 0) return alert("This category is coming soon!");
-
+            if (!currentQuestions || currentQuestions.length === 0) return alert("Coming soon!");
             document.getElementById('p-container').style.display = 'block';
             renderQuestion();
         }
 
         function renderQuestion() {
             const q = currentQuestions[currentIndex];
-            const display = document.getElementById('main-display');
-            
-            // Progress Bar Update
             document.getElementById('p-bar').style.width = ((currentIndex / currentQuestions.length) * 100) + "%";
 
-            display.innerHTML = `
+            document.getElementById('main-display').innerHTML = `
+                <div style="font-size:0.8rem; margin-bottom:10px; opacity:0.7;">Question ${currentIndex + 1} of ${currentQuestions.length}</div>
                 <div class="question-box">${q.question}</div>
                 <div id="options"></div>
             `;
@@ -193,32 +156,42 @@
                     const all = document.querySelectorAll('#options .btn');
                     all.forEach(btn => btn.style.pointerEvents = 'none');
 
-                    // Normalized comparison (ignoring case/extra spaces)
-                    if(opt.trim().toLowerCase() === q.answer.trim().toLowerCase()) {
+                    const isCorrect = opt.trim().toLowerCase() === q.answer.trim().toLowerCase();
+                    
+                    if(isCorrect) {
                         b.classList.add('correct');
+                        score++;
                     } else {
                         b.classList.add('wrong');
+                        // REVEAL LOGIC: Find and highlight the right answer
+                        all.forEach(btn => {
+                            if(btn.innerText.trim().toLowerCase() === q.answer.trim().toLowerCase()) {
+                                btn.classList.add('reveal');
+                            }
+                        });
                     }
 
                     setTimeout(() => {
                         currentIndex++;
-                        if (currentIndex < currentQuestions.length) {
-                            renderQuestion();
-                        } else {
-                            showFinish();
-                        }
-                    }, 1500);
+                        if (currentIndex < currentQuestions.length) renderQuestion();
+                        else showFinish();
+                    }, 2000); // 2 seconds so they can see the correct answer reveal
                 };
                 document.getElementById('options').appendChild(b);
             });
         }
 
         function showFinish() {
+            const percent = (score / currentQuestions.length) * 100;
+            let msg = percent >= 70 ? "Victory! 🏆" : "Good Try! 📖";
+            let sub = percent >= 70 ? "Excellent spirit!" : "Keep studying the Word.";
+
             document.getElementById('p-bar').style.width = "100%";
             document.getElementById('main-display').innerHTML = `
-                <h2 style="margin: 20px 0;">Victory! 🏆</h2>
-                <p style="margin-bottom: 30px; opacity: 0.8;">You've completed the challenge with excellence.</p>
-                <button class="btn" onclick="showHome()" style="background:var(--primary); color:white;">Try Another Category</button>
+                <h2 style="margin-bottom:10px;">${msg}</h2>
+                <div style="font-size:3rem; font-weight:800; margin:20px 0;">${score}/${currentQuestions.length}</div>
+                <p style="margin-bottom:30px; opacity:0.8;">${sub}</p>
+                <button class="btn" onclick="showHome()" style="background:var(--primary); color:white;">Try Another</button>
             `;
         }
 
