@@ -3,201 +3,226 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WLM Quiz | Excellence Edition</title>
+    <title>WLM Youth Quiz | Cloud Edition</title>
     <style>
         :root {
-            --glass: rgba(255, 255, 255, 0.1);
-            --accent: #00d2ff;
-            --text: #ffffff;
+            --primary: #00d2ff;
+            --secondary: #9d50bb;
+            --glass: rgba(255, 255, 255, 0.15);
+            --success: #2ecc71;
+            --error: #e74c3c;
         }
 
         body {
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
-            color: var(--text);
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            color: white;
+            display: flex; justify-content: center; align-items: center;
             min-height: 100vh;
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
         .container {
             background: var(--glass);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 30px;
-            padding: 40px 20px;
-            width: 85%;
-            max-width: 420px;
+            padding: 30px;
+            width: 85%; max-width: 400px;
             text-align: center;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            animation: fadeIn 0.8s ease-out;
         }
 
-        h1 {
-            font-size: 1.8rem;
-            margin-bottom: 5px;
-            letter-spacing: 1px;
-            background: linear-gradient(to right, #fff, #00d2ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        #sync-status {
-            font-size: 0.8rem;
-            margin-bottom: 30px;
-            opacity: 0.7;
-            color: #00ffcc;
+        .header-tag {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            font-size: 0.7rem; font-weight: 800;
+            text-transform: uppercase; padding: 6px 16px;
+            border-radius: 50px; display: inline-block;
+            margin-bottom: 15px; letter-spacing: 1.5px;
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
         }
 
-        .category-btn {
-            background: rgba(255, 255, 255, 0.9);
-            color: #0f2027;
-            border: none;
-            padding: 18px;
-            margin: 12px 0;
-            width: 100%;
-            border-radius: 15px;
-            font-weight: 700;
-            font-size: 1rem;
-            text-transform: uppercase;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            transition: all 0.2s ease;
+        .progress-container {
+            width: 100%; height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px; margin: 20px 0;
+            overflow: hidden; display: none;
+        }
+        .progress-bar { 
+            height: 100%; 
+            background: linear-gradient(to right, var(--primary), #fff); 
+            width: 0%; 
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
         }
 
-        .category-btn:active {
-            transform: scale(0.96);
-            background: var(--accent);
-            color: white;
-        }
-
-        #quiz-screen {
-            display: none;
-        }
-
-        .question-box {
-            font-size: 1.2rem;
-            margin-bottom: 25px;
+        .question-box { 
+            font-size: 1.3rem; 
+            font-weight: 600;
+            margin-bottom: 25px; 
+            min-height: 70px;
             line-height: 1.4;
         }
 
-        .option-btn {
-            background: var(--glass);
-            border: 1px solid rgba(255,255,255,0.4);
-            color: white;
-            padding: 15px;
-            margin: 8px 0;
-            width: 100%;
-            border-radius: 10px;
-            text-align: left;
-            font-size: 0.95rem;
+        .btn {
+            background: rgba(255, 255, 255, 0.95);
+            color: #1e3c72; border: none;
+            padding: 16px; margin: 10px 0;
+            width: 100%; border-radius: 18px;
+            font-weight: 700; font-size: 1rem;
+            transition: 0.3s all; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            cursor: pointer;
         }
+
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.2); }
+        .btn:active { transform: scale(0.96); }
+        
+        .correct { background: var(--success) !important; color: white !important; }
+        .wrong { background: var(--error) !important; color: white !important; }
+
+        #sync-status { font-size: 0.75rem; color: #00ffcc; margin-bottom: 20px; font-weight: 600; }
+        
+        .category-grid h2 { font-size: 1.5rem; margin-bottom: 20px; letter-spacing: -0.5px; }
     </style>
 </head>
 <body>
 
-    <div id="home-screen" class="container">
-        <h1>Worshiplife Ministry</h1>
-        <div id="sync-status">📡 Initializing Cloud Sync...</div>
-        
-        <button class="category-btn" onclick="startQuiz('old')">Old Testament</button>
-        <button class="category-btn" onclick="startQuiz('new')">New Testament</button>
-        <button class="category-btn" onclick="startQuiz('growth')">Spiritual Growth</button>
-        <button class="category-btn" onclick="startQuiz('teens')">Teen Life</button>
-    </div>
+    <div class="container">
+        <div id="quiz-header" class="header-tag">WLM Youth Ministry</div>
+        <div id="sync-status">📡 Syncing Cloud Data...</div>
 
-    <div id="quiz-screen" class="container">
-        <div class="question-box" id="question-text">Loading...</div>
-        <div id="options-container"></div>
-        <button class="category-btn" style="margin-top:20px; background:#ff4b2b; color:white;" onclick="location.reload()">Exit Quiz</button>
+        <div class="progress-container" id="p-container"><div class="progress-bar" id="p-bar"></div></div>
+
+        <div id="main-display">
+            </div>
+
+        <div style="margin-top:25px; opacity:0.4; font-size:0.65rem; letter-spacing: 1px;">
+            DESIGNED FOR EXCELLENCE • V2.5
+        </div>
     </div>
 
     <script>
-        // Use your actual Sheet ID here
+        // Replace with your actual Sheet ID
         const SHEET_ID = "1RrgebuElaDoseB0t-wxl288SyN3PCjanxl8vw7Yxxq0";
         const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&cachebust=${Date.now()}`;
         
         let database = { "old": [], "new": [], "growth": [], "teens": [] };
+        let currentQuestions = [];
+        let currentIndex = 0;
 
-        async function syncWithCloud() {
+        async function init() {
             try {
-                const response = await fetch(SHEET_URL);
-                const csvData = await response.text();
-                processData(csvData);
-            } catch (error) {
-                console.error("Sync failed:", error);
+                const res = await fetch(SHEET_URL);
+                const csv = await res.text();
+                parseData(csv);
+                showHome();
+            } catch (e) {
                 document.getElementById('sync-status').innerText = "⚠️ Offline Mode";
+                console.error(e);
             }
         }
 
-        function processData(csv) {
-            const rows = csv.split('\n').slice(1); // Skip Header
-            let count = 0;
-
+        function parseData(csv) {
+            const rows = csv.split('\n').slice(1);
+            let total = 0;
             rows.forEach(row => {
-                // Use comma for standard Google Sheets CSV
-                const cols = row.split(','); 
-                
+                const cols = row.split(',');
                 if (cols.length >= 4) {
-                    const category = cols[0].trim().toLowerCase();
-                    const entry = {
-                        question: cols[1].trim(),
-                        options: cols[2].split(';').map(o => o.trim()),
-                        answer: cols[3].trim()
-                    };
-
-                    // Direct mapping
-                    if (database[category]) {
-                        database[category].push(entry);
-                        count++;
+                    const cat = cols[0].trim().toLowerCase();
+                    if (database[cat]) {
+                        database[cat].push({
+                            question: cols[1].trim(),
+                            options: cols[2].split(';').map(o => o.trim()),
+                            answer: cols[3].trim()
+                        });
+                        total++;
                     }
                 }
             });
-
-            document.getElementById('sync-status').innerText = `✅ Ministry Cloud Synced: ${count} Questions`;
+            document.getElementById('sync-status').innerText = `✅ ${total} Cloud Questions Synced`;
         }
 
-        function startQuiz(cat) {
-            const questions = database[cat];
-            
-            if (!questions || questions.length === 0) {
-                alert("This category is empty in the Cloud Sheet!");
-                return;
-            }
-
-            document.getElementById('home-screen').style.display = 'none';
-            document.getElementById('quiz-screen').style.display = 'block';
-            
-            showQuestion(questions[0]);
+        function showHome() {
+            document.getElementById('p-container').style.display = 'none';
+            const display = document.getElementById('main-display');
+            display.innerHTML = `
+                <div class="category-grid">
+                    <h2>Choose Your Path</h2>
+                    <button class="btn" onclick="start('old')">📜 Old Testament</button>
+                    <button class="btn" onclick="start('new')">📖 New Testament</button>
+                    <button class="btn" onclick="start('growth')">🌱 Spiritual Growth</button>
+                    <button class="btn" onclick="start('teens')">🙌 Teen Life</button>
+                </div>
+            `;
         }
 
-        function showQuestion(q) {
-            document.getElementById('question-text').innerText = q.question;
-            const container = document.getElementById('options-container');
-            container.innerHTML = "";
+        function start(cat) {
+            currentQuestions = database[cat];
+            currentIndex = 0;
+            if (currentQuestions.length === 0) return alert("This category is coming soon!");
 
+            document.getElementById('p-container').style.display = 'block';
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const q = currentQuestions[currentIndex];
+            const display = document.getElementById('main-display');
+            
+            // Progress Bar Update
+            document.getElementById('p-bar').style.width = ((currentIndex / currentQuestions.length) * 100) + "%";
+
+            display.innerHTML = `
+                <div class="question-box">${q.question}</div>
+                <div id="options"></div>
+            `;
+            
             q.options.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.className = "option-btn";
-                btn.innerText = opt;
-                btn.onclick = () => {
-                    if(opt === q.answer) {
-                        btn.style.background = "#28a745";
-                        alert("Correct! Keep growing!");
+                const b = document.createElement('button');
+                b.className = "btn";
+                b.innerText = opt;
+                b.onclick = () => {
+                    const all = document.querySelectorAll('#options .btn');
+                    all.forEach(btn => btn.style.pointerEvents = 'none');
+
+                    if(opt.toLowerCase() === q.answer.toLowerCase()) {
+                        b.classList.add('correct');
                     } else {
-                        btn.style.background = "#dc3545";
-                        alert("Not quite. Check your Bible!");
+                        b.classList.add('wrong');
                     }
+
+                    setTimeout(() => {
+                        currentIndex++;
+                        if (currentIndex < currentQuestions.length) {
+                            renderQuestion();
+                        } else {
+                            showFinish();
+                        }
+                    }, 1500);
                 };
-                container.appendChild(btn);
+                document.getElementById('options').appendChild(b);
             });
         }
 
-        // Start the sync when page loads
-        syncWithCloud();
+        function showFinish() {
+            document.getElementById('p-bar').style.width = "100%";
+            document.getElementById('main-display').innerHTML = `
+                <h2 style="margin: 20px 0;">Victory! 🏆</h2>
+                <p style="margin-bottom: 30px; opacity: 0.8;">You've completed the challenge with excellence.</p>
+                <button class="btn" onclick="showHome()" style="background:var(--primary); color:white;">Try Another Category</button>
+            `;
+        }
+
+        // Start the engine
+        init();
     </script>
 </body>
 </html>
